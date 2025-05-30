@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function LayoutLogin({
+export default function LayoutDashboard({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return children
+  return <div>{children}</div>
 }
