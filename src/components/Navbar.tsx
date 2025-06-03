@@ -8,6 +8,7 @@ import React from 'react'
 export default function Navbar() {
   const pathname = usePathname()
   const isAdminPath = pathname.startsWith('/admin')
+
   return (
     <div className={`${isAdminPath && 'hidden'} border-[#f04c1c] border-b-2 py-3 px-4`}>
       <div className="container mx-auto">

@@ -1,26 +1,37 @@
-import AdminLayout from '@/components/AdminLayout'
+'use client'
 import React from 'react'
+import { useExperience } from '../hooks/useExperience'
+import CardExperience from '@/components/CardExperience'
 
 export default function Experience() {
-  return (
-    <AdminLayout>
-      <div className="mt-10">
-        <p className="text-9xl font-bold text-[#f04c1c]">EXPERIENCE</p>
+  const { data, isLoading } = useExperience()
+  const formatDate = (dateTime: string) => {
+    const date = new Date(dateTime)
+    const isEpoch = date.getTime() === 0
+
+    if (isEpoch) return 'Present'
+
+    return date.toLocaleDateString('id-ID', {
+      month: 'long',
+      year: 'numeric',
+    })
+  }
+  return isLoading ? (
+    ''
+  ) : (
+    <div className="mt-10">
+      <p className="text-9xl font-bold text-[#f04c1c]">EXPERIENCE</p>
+      {data && data.length === 0 ? (
+        <p>Kosong</p>
+      ) : (
         <div className="mt-10 grid grid-cols-2 gap-5">
-          <div className="grid grid-cols-2 border-2 border-[#f04c1c]">
-            <div className="bg-[#f04c1c] col-span-1 w-full h-full"></div>
-            <p className="p-2 text-sm">Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque dolorum, dolor voluptatem sequi voluptates quidem ipsam totam adipisci esse consectetur consequuntur aliquid, facilis beatae quis ex quasi temporibus aut culpa.</p>
-          </div>
-          <div className="grid grid-cols-2 border-2 border-[#f04c1c]">
-            <div className="bg-[#f04c1c] col-span-1 w-full h-full"></div>
-            <p className="p-2">Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque dolorum, dolor voluptatem sequi voluptates quidem ipsam totam adipisci esse consectetur consequuntur aliquid, facilis beatae quis ex quasi temporibus aut culpa.</p>
-          </div>
-          <div className="grid grid-cols-2 border-2 border-[#f04c1c]">
-            <div className="bg-[#f04c1c] col-span-1 w-full h-full"></div>
-            <p className="p-2">Lorem ipsum dolor sit amet consectetur adipisicing elit. Itaque dolorum, dolor voluptatem sequi voluptates quidem ipsam totam adipisci esse consectetur consequuntur aliquid, facilis beatae quis ex quasi temporibus aut culpa.</p>
-          </div>
+          {data?.map((item, idx) => (
+            <div key={idx}>
+              <CardExperience id={item.id} createdAt={item.createdAt} updatedAt={item.updatedAt} company={item.company} role={item.role} description={item.description} location={item.location} startDate={formatDate(item.startDate)} endDate={formatDate(item.endDate)} />
+            </div>
+          ))}
         </div>
-      </div>
-    </AdminLayout>
+      )}
+    </div>
   )
 }
