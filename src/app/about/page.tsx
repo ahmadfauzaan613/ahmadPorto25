@@ -10,7 +10,7 @@ export default function About() {
   ) : (
     <div className="bg-[#f04c1c] h-full w-full p-5 mt-10">
       <div className=" ">
-        <p className="text-white font-bold text-8xl">ABOUT</p>
+        <h1 className="text-white font-bold text-8xl">ABOUT</h1>
         <div className="bg-white w-full h-[40vh] my-7"></div>
       </div>
       <p className="text-white">{data?.text}</p>

@@ -26,3 +26,31 @@ model experience {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model home {
+  id        Int      @id @default(autoincrement())
+  role      String
+  dataLink  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model portofolio {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  image       String
+  link        String
+  logo        Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model certificate {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

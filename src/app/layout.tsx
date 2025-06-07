@@ -1,16 +1,20 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import AdminLayout from '@/components/AdminLayout'
+import { Archivo_Black, Lato } from 'next/font/google'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const ArchivoFont = Archivo_Black({
   subsets: ['latin'],
+  variable: '--font-archivo',
+  weight: ['400'],
+  display: 'swap',
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const LatoFont = Lato({
   subsets: ['latin'],
+  variable: '--font-lato',
+  weight: ['400'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -25,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${ArchivoFont.variable} ${LatoFont.variable} antialiased`}>
         <AdminLayout>{children}</AdminLayout>
       </body>
     </html>
