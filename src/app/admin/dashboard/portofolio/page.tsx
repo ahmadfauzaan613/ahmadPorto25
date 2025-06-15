@@ -1,6 +1,7 @@
 'use client'
 
 import { usePorto } from '@/app/hooks/portofolio/usePorto'
+import { useCreatePorto } from '@/app/hooks/portofolio/usePortoAdd'
 import { useDeletePorto } from '@/app/hooks/portofolio/usePortoDelete'
 import DialogAdd from '@/components/DialogAdd'
 import DialogDelete from '@/components/DialogDelete'
@@ -98,9 +99,12 @@ export default function Portofolio() {
     }
   }
 
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [logoFiles, setLogoFiles] = useState<File[]>([])
   const [filterValue, setFilterValue] = useState<IPortoCreate>({
     name: '',
     description: '',
+    image: '',
     link: '',
     logo: [],
   })
@@ -108,6 +112,7 @@ export default function Portofolio() {
   const initialValue: IPortoCreate = {
     name: '',
     description: '',
+    image: '',
     link: '',
     logo: [],
   }
@@ -129,19 +134,28 @@ export default function Portofolio() {
     setLogoArr((prev) => [...prev, { name: '' }])
   }
 
-  const payloadCreate: IPortoCreate = {
-    name: filterValue.name,
-    description: filterValue.description,
-    link: filterValue.link,
-    logo: addLogoArr,
-  }
+  const { mutate: createPorto } = useCreatePorto()
 
-  console.log(payloadCreate)
+  const handleSubmit = () => {
+    const payload: IPortoCreate = {
+      ...filterValue,
+      image: '',
+      logo: addLogoArr.map((item) => ({
+        name: item.name,
+      })),
+    }
+
+    createPorto({
+      payload,
+      image: imageFile,
+      files: logoFiles,
+    })
+  }
 
   return (
     <TiltleAdmin tilte="PORTOFOLIO" addButton={true} onClick={handleOpenAdd}>
       <Table data={data ?? []} columns={columns} isLoading={isLoading} />
-      <DialogAdd open={openAdd} setOpen={setOpenAdd} handleAdd={() => {}}>
+      <DialogAdd open={openAdd} setOpen={setOpenAdd} handleAdd={handleSubmit}>
         <div className="space-y-4">
           {fields.map((field) => {
             const { key, label, type } = field
@@ -169,6 +183,22 @@ export default function Portofolio() {
                 return (
                   <div key={key}>
                     <Label htmlFor={key}>{label}</Label>
+                    <Input
+                      id={key}
+                      type="file"
+                      accept="image/*"
+                      className="mt-2 w-full outline-none capitalize"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setImageFile(file)
+                          setFilterValue((prev) => ({
+                            ...prev,
+                            image: file.name,
+                          }))
+                        }
+                      }}
+                    />
                   </div>
                 )
               case 'text':
@@ -206,7 +236,19 @@ export default function Portofolio() {
               <div className="grid items-center grid-cols-2 gap-2" key={idx}>
                 <div>
                   <Label htmlFor="logo">Logo</Label>
-                  <Input id="logo" type="file" className="mt-2 w-full outline-none capitalize" />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setLogoFiles((prev) => {
+                        const updated = [...prev]
+                        updated[idx] = file
+                        return updated
+                      })
+                    }}
+                  />
                 </div>
                 <div className="my-1">
                   <Label htmlFor={`logo-name-${idx}`}>Logo Name</Label>

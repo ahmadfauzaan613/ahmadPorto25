@@ -18,10 +18,24 @@ export interface IlogoType {
 export interface IPortoCreate {
   name: string
   description: string
+  image: string
   link: string
   logo: IlogoCreate[]
 }
 
 export interface IlogoCreate {
   name: string
+}
+
+export interface IPortofolioResponse {
+  id: number
+  name: string
+  description: string
+  image: string
+  link: string
+  logo: {
+    name: string
+    file: string
+  }[]
+  createdAt: string
 }
