@@ -9,7 +9,7 @@ export interface SidebarProps {
 
 export const LinkSidebar: SidebarProps[] = [
   {
-    title: 'Dashboard',
+    title: 'Home',
     url: '/admin/dashboard',
     icon: <Home />,
   },

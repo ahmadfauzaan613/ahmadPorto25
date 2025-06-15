@@ -1,45 +1,42 @@
 'use client'
 
 import React from 'react'
-import { useReactTable, getCoreRowModel, flexRender, createColumnHelper } from '@tanstack/react-table'
+import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from '@tanstack/react-table'
 
-type User = {
-  id: number
-  name: string
-  email: string
+interface TableProps<T, TValue> {
+  data: T[]
+  columns: ColumnDef<T, TValue>[]
+  isLoading?: boolean
 }
 
-const defaultData: User[] = [
-  { id: 1, name: 'Alice', email: 'alice@mail.com' },
-  { id: 2, name: 'Bob', email: 'bob@mail.com' },
-  { id: 3, name: 'Charlie', email: 'charlie@mail.com' },
-]
+export default function Table<T, TValue>({ data, columns, isLoading }: TableProps<T, TValue>) {
+  const numberingColumn: ColumnDef<T, unknown> = {
+    id: 'number',
+    header: 'No',
+    cell: ({ row }) => row.index + 1,
+    size: 50,
+  }
 
-const columnHelper = createColumnHelper<User>()
-
-const columns = [
-  columnHelper.accessor('id', {
-    header: 'ID',
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor('email', {
-    header: 'Email',
-    cell: (info) => info.getValue(),
-  }),
-]
-
-export default function Table() {
   const table = useReactTable({
-    data: defaultData,
-    columns,
+    data,
+    columns: [numberingColumn, ...columns],
     getCoreRowModel: getCoreRowModel(),
   })
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loader"></span>
+      </div>
+    )
+  }
+
+  if (!data.length) {
+    return <div className="text-center py-10">No data available.</div>
+  }
+
   return (
-    <div className="mt-10">
+    <div className="mt-10 overflow-x-auto">
       <table className="min-w-full border border-[#f04c1c]">
         <thead className="bg-[#f04c1c] text-white">
           {table.getHeaderGroups().map((headerGroup) => (

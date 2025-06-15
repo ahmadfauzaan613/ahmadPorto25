@@ -14,3 +14,14 @@ export interface IlogoType {
   file: string
   name: string
 }
+
+export interface IPortoCreate {
+  name: string
+  description: string
+  link: string
+  logo: IlogoCreate[]
+}
+
+export interface IlogoCreate {
+  name: string
+}

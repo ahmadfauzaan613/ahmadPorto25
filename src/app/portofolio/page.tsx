@@ -5,7 +5,7 @@ export default function Portofolio() {
   return (
     <div className="my-3">
       <div className="bg-[#f04c1c] my-10">
-        <p className="text-white font-bold text-[96px] p-5">PORTOFOLIO</p>
+        <h1 className="text-white font-bold text-[96px] p-5">PORTOFOLIO</h1>
         <div className="bg-black w-full h-[40vh]"></div>
       </div>
       <div className="grid grid-cols-3 gap-1">

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const prisma = new PrismaClient()
 
 export async function PUT(req: NextRequest, { params }: ParamType) {
-  const id = Number(params.id)
+  const id = Number(params?.id)
   const body = await req.json()
   const { company, role, description, startDate, endDate, location } = body
   const parsedStartDate = new Date(startDate)

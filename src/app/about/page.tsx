@@ -1,19 +1,17 @@
 'use client'
 
 import React from 'react'
-import { useAbout } from '../hooks/useAbout'
+import { useAbout } from '../hooks/about/useAbout'
 
 export default function About() {
-  const { data, isLoading } = useAbout()
-  return isLoading ? (
-    <p>Loading</p>
-  ) : (
-    <div className="bg-[#f04c1c] h-full w-full p-5 mt-10">
-      <div className=" ">
-        <h1 className="text-white font-bold text-8xl">ABOUT</h1>
-        <div className="bg-white w-full h-[40vh] my-7"></div>
+  const { data } = useAbout()
+  return (
+    <div className="h-full w-full p-5 mt-10">
+      <div className="">
+        <h1 className="text-[#f04c1c] font-bold text-[96px]">ABOUT</h1>
+        <div className="bg-black w-full h-[40vh] my-7"></div>
       </div>
-      <p className="text-white">{data?.text}</p>
+      <p className="text-[#f04c1c]">{data?.text}</p>
     </div>
   )
 }

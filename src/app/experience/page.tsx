@@ -1,10 +1,10 @@
 'use client'
 import React from 'react'
-import { useExperience } from '../hooks/useExperience'
+import { useExperience } from '../hooks/experience/useExperience'
 import CardExperience from '@/components/CardExperience'
 
 export default function Experience() {
-  const { data, isLoading } = useExperience()
+  const { data } = useExperience()
   const formatDate = (dateTime: string) => {
     const date = new Date(dateTime)
     const isEpoch = date.getTime() === 0
@@ -16,11 +16,9 @@ export default function Experience() {
       year: 'numeric',
     })
   }
-  return isLoading ? (
-    ''
-  ) : (
+  return (
     <div className="mt-10">
-      <p className="text-9xl font-bold text-[#f04c1c]">EXPERIENCE</p>
+      <h1 className="text-[#f04c1c] font-bold text-[96px]">EXPERIENCE</h1>
       {data && data.length === 0 ? (
         <p>Kosong</p>
       ) : (
