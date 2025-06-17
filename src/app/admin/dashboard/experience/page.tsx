@@ -19,6 +19,7 @@ import ErrorDialog from '@/components/ErrorDialog'
 import { useCreateExp } from '@/app/hooks/experience/useExpAdd'
 import { useUpdateExp } from '@/app/hooks/experience/UseExpUpdate'
 import { Textarea } from '@/components/ui/textarea'
+import { result } from 'lodash'
 
 export default function Experience() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -28,17 +29,7 @@ export default function Experience() {
   const [showError, setShowError] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const { data, isLoading } = useExperience()
-  const { mutate: mutateDelete } = useDeleteExperience()
-  const handleDelete = async (id: string) => {
-    try {
-      await mutateDelete(id)
-      setShowSuccess(true)
-    } catch (error) {
-      console.error(error)
-      setErrorMsg('Delete failed.')
-      setShowError(true)
-    }
-  }
+
   const fields = [
     { key: 'company', label: 'Company', type: 'text' },
     { key: 'role', label: 'Role', type: 'text' },
@@ -81,16 +72,78 @@ export default function Experience() {
   }
 
   useEffect(() => {
-    if (selectedId !== null && data && data.length > 0) {
-      const selected = data.find((item) => item.id === selectedId)
+    if (selectedId !== null && data && result(data, 'data', []).length > 0) {
+      const selected = (result(data, 'data', []) as IExperienceType[]).find((item) => item.id === selectedId)
       if (selected) {
         setFilterValue(selected)
       }
     }
   }, [selectedId, data])
 
-  const columnHelper = createColumnHelper<IExperienceType>()
+  // DELETE
+  const { mutate: mutateDelete } = useDeleteExperience()
+  const handleDelete = async (id: string) => {
+    try {
+      await mutateDelete(id)
+      setShowSuccess(true)
+    } catch (error) {
+      console.error(error)
+      setErrorMsg('Delete failed.')
+      setShowError(true)
+    }
+  }
 
+  // CREATE
+  const payloadCreate: IExperienceCreateType = {
+    company: filterValue.company,
+    role: filterValue.role,
+    description: filterValue.description,
+    startDate: filterValue.startDate,
+    endDate: filterValue.endDate,
+    location: filterValue.location,
+  }
+  const { mutate: createExp } = useCreateExp()
+  const handleAdd = async () => {
+    try {
+      await createExp(payloadCreate)
+      setShowSuccess(true)
+      setOpenAdd(false)
+    } catch (error) {
+      console.error(error)
+      setErrorMsg('Delete failed.')
+      setShowError(true)
+      setOpenAdd(false)
+    }
+  }
+
+  // UPDATE
+  const payloadUpdate: IExperienceUpdateType = {
+    id: selectedId,
+    company: filterValue.company,
+    role: filterValue.role,
+    description: filterValue.description,
+    startDate: filterValue.startDate,
+    endDate: filterValue.endDate,
+    location: filterValue.location,
+  }
+
+  const { mutate: updateExp } = useUpdateExp()
+
+  const handleUpdate = async () => {
+    try {
+      await updateExp(payloadUpdate)
+      setShowSuccess(true)
+      setOpen(false)
+    } catch (error: unknown) {
+      console.error(error)
+      setErrorMsg('Update failed.')
+      setShowError(true)
+      setOpen(false)
+    }
+  }
+
+  // TABLE
+  const columnHelper = createColumnHelper<IExperienceType>()
   const columns = [
     columnHelper.accessor('company', {
       header: 'Company',
@@ -146,64 +199,15 @@ export default function Experience() {
     },
   ]
 
-  const payloadCreate: IExperienceCreateType = {
-    company: filterValue.company,
-    role: filterValue.role,
-    description: filterValue.description,
-    startDate: filterValue.startDate,
-    endDate: filterValue.endDate,
-    location: filterValue.location,
-  }
-
-  const { mutate: createExp } = useCreateExp()
-
-  const handleAdd = async () => {
-    try {
-      await createExp(payloadCreate)
-      setShowSuccess(true)
-      setOpenAdd(false)
-    } catch (error) {
-      console.error(error)
-      setErrorMsg('Delete failed.')
-      setShowError(true)
-      setOpenAdd(false)
-    }
-  }
-
-  const payloadUpdate: IExperienceUpdateType = {
-    id: selectedId,
-    company: filterValue.company,
-    role: filterValue.role,
-    description: filterValue.description,
-    startDate: filterValue.startDate,
-    endDate: filterValue.endDate,
-    location: filterValue.location,
-  }
-
-  const { mutate: updateExp } = useUpdateExp()
-
-  const handleUpdate = async () => {
-    try {
-      await updateExp(payloadUpdate)
-      setShowSuccess(true)
-      setOpen(false)
-    } catch (error: unknown) {
-      console.error(error)
-      setErrorMsg('Update failed.')
-      setShowError(true)
-      setOpen(false)
-    }
-  }
-
   return (
     <TiltleAdmin tilte="EXPERIENCE" addButton={true} onClick={handleOpenAdd}>
-      <Table data={data ?? []} columns={columns} isLoading={isLoading} />
+      <Table data={result(data, 'data', [])} columns={columns} isLoading={isLoading} />
       <DialogEdit
         open={open}
         setOpen={setOpen}
         onReset={() => {
           if (selectedId && data) {
-            const selected = data.find((item) => item.id === selectedId)
+            const selected = (result(data, 'data', []) as IExperienceType[]).find((item) => item.id === selectedId)
             if (selected) {
               setFilterValue(selected)
             }

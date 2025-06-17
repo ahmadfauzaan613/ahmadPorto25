@@ -9,6 +9,7 @@ import SuccessDialog from '@/components/SuccessDialog'
 import TiltleAdmin from '@/components/TiltleAdmin'
 import { Button } from '@/components/ui/button'
 import { IHomeType, IHomeUpdateType } from '@/types/HomeType'
+import { result } from 'lodash'
 import React, { useEffect, useState } from 'react'
 
 export default function Dashboard() {
@@ -25,11 +26,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (data) {
       setFieldInput({
-        role: data.role || '',
-        dataLink: data.dataLink || [],
+        role: result(data, 'data.role', ''),
+        dataLink: result(data, 'data.dataLink', []),
       })
     }
   }, [data])
+
   const handleLinkChange = (index: number, value: string) => {
     setFieldInput((prev) => {
       const updatedLinks = [...prev.dataLink]
@@ -47,10 +49,10 @@ export default function Dashboard() {
 
   // UPDATE DATA
   const payloadUpdate: IHomeUpdateType = {
-    id: data?.id,
+    id: result(data, 'data.id', ''),
     payload: {
-      role: fieldInput?.role,
-      dataLink: fieldInput?.dataLink,
+      role: result(fieldInput, 'role', ''),
+      dataLink: result(fieldInput, 'dataLink', []),
     },
   }
 

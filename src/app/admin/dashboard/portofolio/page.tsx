@@ -22,12 +22,18 @@ import React, { useState } from 'react'
 export default function Portofolio() {
   const { data, isLoading } = usePorto()
   const [openAdd, setOpenAdd] = useState(false)
+  const [openEdit, setOpenEdit] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showError, setShowError] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [addLogoArr, setLogoArr] = useState<{ name: string }[]>([])
   const columnHelper = createColumnHelper<IPortofolioType>()
+
+  const handleOpenEdit = () => {
+    setOpenEdit(true)
+  }
+
   const columns = [
     columnHelper.accessor('name', {
       header: 'Name',
@@ -71,7 +77,15 @@ export default function Portofolio() {
       header: 'Actions',
       cell: ({ row }: CellContext<IPortofolioType, unknown>) => (
         <div className="flex gap-2">
-          <button onClick={() => setSelectedId(row.original.id)} className="p-1 text-blue-600 hover:text-blue-800" aria-label="Edit" title="Edit">
+          <button
+            onClick={() => {
+              setSelectedId(row.original.id)
+              handleOpenEdit()
+            }}
+            className="p-1 text-blue-600 hover:text-blue-800"
+            aria-label="Edit"
+            title="Edit"
+          >
             <Edit2 size={16} />
           </button>
           <DialogDelete
@@ -131,25 +145,33 @@ export default function Portofolio() {
   ] as const
 
   const handleAddLogo = () => {
-    setLogoArr((prev) => [...prev, { name: '' }])
+    setLogoArr((prev) => [...prev, { file: '', name: '' }])
   }
 
   const { mutate: createPorto } = useCreatePorto()
-
-  const handleSubmit = () => {
-    const payload: IPortoCreate = {
-      ...filterValue,
-      image: '',
-      logo: addLogoArr.map((item) => ({
-        name: item.name,
-      })),
+  const handleSubmit = async () => {
+    try {
+      const payload: IPortoCreate = {
+        ...filterValue,
+        image: '',
+        logo: addLogoArr.map((item) => ({
+          name: item.name,
+          file: '',
+        })),
+      }
+      createPorto({
+        payload,
+        image: imageFile,
+        files: logoFiles,
+      })
+      setOpenAdd(false)
+      setShowSuccess(true)
+    } catch (error) {
+      console.error(error)
+      setOpenAdd(false)
+      setErrorMsg('Failed to save data. Please try again.')
+      setShowError(true)
     }
-
-    createPorto({
-      payload,
-      image: imageFile,
-      files: logoFiles,
-    })
   }
 
   return (

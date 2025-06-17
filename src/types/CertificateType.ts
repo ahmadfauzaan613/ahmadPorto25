@@ -6,3 +6,12 @@ export interface ICertificateType {
   createdAt: string
   updatedAt: string
 }
+export interface ICreateCertificateType {
+  name: string
+  description: string
+}
+export interface IUpdateCertificateType {
+  id: number
+  name: string
+  description: string
+}

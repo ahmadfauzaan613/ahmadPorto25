@@ -10,6 +10,7 @@ import TiltleAdmin from '@/components/TiltleAdmin'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { IAboutType, IAboutUpdateType } from '@/types/AboutType'
+import { result } from 'lodash'
 import React, { useEffect, useState } from 'react'
 
 export default function AboutAdmin() {
@@ -21,10 +22,9 @@ export default function AboutAdmin() {
   const [text, setText] = useState('')
   // GET DATA
   const { data, isLoading } = useAbout()
-
   useEffect(() => {
-    if (data?.text) {
-      setText(data.text)
+    if (result(data, 'data.text', '')) {
+      setText(result(data, 'data.text', ''))
     }
   }, [data])
 
@@ -35,14 +35,12 @@ export default function AboutAdmin() {
   const { mutate: createAbout } = useCreateAbout()
 
   // UPDATE DATA
-
   const payloadUpdate: IAboutUpdateType = {
-    id: data?.id,
+    id: result(data, 'data.id', ''),
     payload: {
       text: text,
     },
   }
-
   const { mutate: updateAbout } = useUpdateAbout()
 
   const handleButton = async () => {

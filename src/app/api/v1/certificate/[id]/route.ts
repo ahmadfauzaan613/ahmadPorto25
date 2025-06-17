@@ -16,27 +16,34 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const existing = await prisma.certificate.findUnique({ where: { id } })
 
     if (!existing) {
-      return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          status: 400,
+          message: 'Invalid ID',
+          data: null,
+        },
+        { status: 400 }
+      )
     }
 
-    const parsed = JSON.parse(jsonString) as {
+    const parsed = JSON.parse(jsonString) as Partial<{
       name: string
       description: string
-    }
+    }>
 
     let imageUrl = existing.image
 
-    if (image) {
-      // Hapus image lama
+    // ✅ Jika ada image baru, upload
+    if (image && image.size > 0) {
       if (existing.image) {
         const oldPath = path.join(process.cwd(), 'public', existing.image)
-        await unlink(oldPath).catch(() => {}) // Abaikan error jika file tidak ditemukan
+        await unlink(oldPath).catch(() => {})
       }
 
-      // Simpan image baru
       const bytes = await image.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${Date.now()}-${image.name.replace(/\s+/g, '-')}`
+      const fileName = `${image.name.replace(/\s+/g, '-')}`
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
@@ -45,45 +52,91 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const updated = await prisma.certificate.update({
       where: { id },
       data: {
-        name: parsed.name,
-        description: parsed.description,
+        name: parsed.name ?? existing.name,
+        description: parsed.description ?? existing.description,
         image: imageUrl,
       },
     })
 
-    return NextResponse.json(updated, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Data successfully updated',
+        data: updated,
+      },
+      { status: 200 }
+    )
   } catch (err) {
     console.error('[CERTIFICATE PUT ERROR]', err)
-    return NextResponse.json({ error: 'Gagal mengupdate data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }
 
 export async function GET(_: NextRequest, { params }: ParamType) {
   const id = Number(params.id)
   if (isNaN(id)) {
-    return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 })
+    return NextResponse.json({ success: false, status: 400, message: 'Invalid ID', data: null }, { status: 400 })
   }
   try {
     const getAboutDBDetail = await prisma.certificate.findUnique({
       where: { id },
     })
-    return NextResponse.json(getAboutDBDetail, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully get data',
+        data: getAboutDBDetail,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Terjadi kesalahan pada server' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }
 
 export async function DELETE(_: NextRequest, { params }: ParamType) {
   const id = Number(params.id)
   if (isNaN(id)) {
-    return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 })
+    return NextResponse.json({ success: false, status: 400, message: 'Invalid ID', data: null }, { status: 400 })
   }
   try {
-    const deleted = await prisma.certificate.delete({ where: { id } })
-    return NextResponse.json(deleted, { status: 200 })
+    await prisma.certificate.delete({ where: { id } })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Data successfully deleted',
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Gagal Menghapus data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        status: 500,
+        message: 'A server error occurred',
+      },
+      { status: 500 }
+    )
   }
 }

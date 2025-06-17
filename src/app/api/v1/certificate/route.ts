@@ -8,10 +8,26 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const getData = await prisma.certificate.findMany()
-    return NextResponse.json(getData, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully get data',
+        data: getData,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Terjadi Kesalahan' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -35,13 +51,20 @@ export async function POST(req: NextRequest) {
     if (image) {
       const bytes = await image.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${Date.now()}-${image.name.replace(/\s+/g, '-')}`
+      const fileName = `${image.name.replace(/\s+/g, '-')}`
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
 
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
     } else {
-      return NextResponse.json({ error: 'Gambar harus diupload' }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          status: 400,
+          message: 'Image file is required.',
+        },
+        { status: 400 }
+      )
     }
 
     const newData = await prisma.certificate.create({
@@ -52,9 +75,25 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(newData, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully create data',
+        data: newData,
+      },
+      { status: 200 }
+    )
   } catch (err) {
     console.error('[CERTIFICATE POST ERROR]', err)
-    return NextResponse.json({ error: 'Gagal menambahkan data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }

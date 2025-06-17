@@ -1,6 +1,5 @@
 import { PrismaClient } from '@/generated/prisma'
 import { ParamType } from '@/types/ParamType'
-import { IlogoType } from '@/types/Portofolio'
 import { writeFile, unlink } from 'fs/promises'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
@@ -13,8 +12,8 @@ export async function PUT(req: NextRequest) {
   const formData = await req.formData()
 
   const jsonString = formData.get('json')?.toString() ?? ''
-  const logoFiles = formData.getAll('file') as File[] // multiple logo files
-  const imageFile = formData.get('image') as File | null // main image
+  const logoFiles = formData.getAll('file') as File[]
+  const imageFile = formData.get('image') as File | null
 
   try {
     const existing = await prisma.portofolio.findUnique({ where: { id } })
@@ -23,58 +22,55 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
     }
 
-    if (!jsonString) {
-      return NextResponse.json({ error: 'Data json tidak valid' }, { status: 400 })
-    }
-
     const parsed = JSON.parse(jsonString) as {
       name: string
       description: string
       image: string
       link: string
-      logo: IlogoType[]
+      logo: { name: string; file: string }[]
     }
 
     const { name, description, link, logo } = parsed
 
     let imageUrl = existing.image
 
-    // Handle update main image
-    if (imageFile) {
+    if (imageFile && imageFile.size > 0) {
       if (existing.image) {
         const oldImagePath = path.join(process.cwd(), 'public', existing.image)
-        await unlink(oldImagePath).catch(() => {}) // ignore error jika tidak ada
+        await unlink(oldImagePath).catch(() => {})
       }
       const bytes = await imageFile.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${Date.now()}-image-${imageFile.name.replace(/\s+/g, '-')}`
+      const fileName = `${imageFile.name.replace(/\s+/g, '-')}`
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
     }
-
-    // Handle update multiple logos
+    let fileUploadIndex = 0
     const updatedLogos = await Promise.all(
-      logo.map(async (item, index) => {
-        let filePath = item.file // default dari JSON
+      logo.map(async (item) => {
+        if (!item.file) {
+          const file = logoFiles[fileUploadIndex]
+          fileUploadIndex++
 
-        const file = logoFiles[index]
-        if (file) {
-          const bytes = await file.arrayBuffer()
-          const buffer = Buffer.from(bytes)
-          const fileName = `${Date.now()}-logo-${index}-${file.name.replace(/\s+/g, '-')}`
-          const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
-          await writeFile(fullPath, buffer)
-          filePath = `/upload/image/${fileName}`
+          if (file && file.size > 0) {
+            const bytes = await file.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+            const fileName = `${file.name.replace(/\s+/g, '-')}`
+            const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
+            await writeFile(fullPath, buffer)
+            return {
+              ...item,
+              file: `/upload/image/${fileName}`,
+            }
+          }
         }
 
-        return {
-          ...item,
-          file: filePath,
-        }
+        return item
       })
     )
 
+    // ✅ Update ke DB
     const updatedData = await prisma.portofolio.update({
       where: { id },
       data: {

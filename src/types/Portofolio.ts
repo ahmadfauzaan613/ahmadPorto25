@@ -24,6 +24,7 @@ export interface IPortoCreate {
 }
 
 export interface IlogoCreate {
+  file: string
   name: string
 }
 

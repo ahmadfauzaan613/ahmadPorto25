@@ -6,10 +6,26 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const getData = await prisma.experience.findMany()
-    return NextResponse.json(getData, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully get data',
+        data: getData,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Terjadi Kesalahan' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -29,9 +45,25 @@ export async function POST(req: NextRequest) {
         location,
       },
     })
-    return NextResponse.json(newData, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully create data',
+        data: newData,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Gagal menambahkan data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }

@@ -38,11 +38,25 @@ export async function DELETE(_: NextRequest, { params }: ParamType) {
     return NextResponse.json({ error: 'ID tidak valid' }, { status: 400 })
   }
   try {
-    const deleted = await prisma.experience.delete({ where: { id } })
-    return NextResponse.json(deleted, { status: 200 })
+    await prisma.experience.delete({ where: { id } })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Data successfully deleted',
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Gagal Menghapus data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        status: 500,
+        message: 'A server error occurred',
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -55,9 +69,25 @@ export async function GET(_: NextRequest, { params }: ParamType) {
     const getAboutDBDetail = await prisma.experience.findUnique({
       where: { id },
     })
-    return NextResponse.json(getAboutDBDetail, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully get data',
+        data: getAboutDBDetail,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Terjadi kesalahan pada server' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }

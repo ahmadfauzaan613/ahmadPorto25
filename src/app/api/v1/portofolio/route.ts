@@ -18,8 +18,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
   const jsonString = formData.get('json')?.toString() ?? ''
-  const logoFiles = formData.getAll('file') as File[] // multiple logo files
-  const imageFile = formData.get('image') as File | null // main image
+  const logoFiles = formData.getAll('file') as File[]
+  const imageFile = formData.get('image') as File | null
 
   try {
     if (!jsonString) {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (imageFile) {
       const bytes = await imageFile.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${Date.now()}-image-${imageFile.name.replace(/\s+/g, '-')}`
+      const fileName = `${imageFile.name.replace(/\s+/g, '-')}`
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
@@ -52,12 +52,11 @@ export async function POST(req: NextRequest) {
     const updatedLogos = await Promise.all(
       logo.map(async (item, index) => {
         let filePath = item.file || ''
-
         const file = logoFiles[index]
         if (file) {
           const bytes = await file.arrayBuffer()
           const buffer = Buffer.from(bytes)
-          const fileName = `${Date.now()}-logo-${index}-${file.name.replace(/\s+/g, '-')}`
+          const fileName = `${file.name.replace(/\s+/g, '-')}`
           const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
           await writeFile(fullPath, buffer)
           filePath = `/upload/image/${fileName}`
