@@ -7,9 +7,19 @@ import React from 'react'
 import { File, FileUser, Linkedin, Mail, Phone } from 'lucide-react'
 import { ButtonFunctionProps, IDataLinkType } from '@/types/HomeType'
 import Link from 'next/link'
+import { result } from 'lodash'
+import Image from 'next/image'
 
 export default function RoleAndLink() {
-  const { data } = useHome()
+  const { data, isLoading } = useHome()
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loader"></span>
+      </div>
+    )
+  }
 
   const ButtonFunction: React.FC<ButtonFunctionProps> = ({ data }) => {
     switch (data.toLowerCase()) {
@@ -30,10 +40,12 @@ export default function RoleAndLink() {
 
   return (
     <React.Fragment>
-      <h1 className="text-8xl font-bold text-[#f04c1c] uppercase">{data?.role}</h1>
-      <div className="w-full bg-black h-[50vh] mt-10"></div>
+      <h1 className="text-8xl font-bold text-[#f04c1c] uppercase">{result(data, 'data.role', '')}</h1>
+      <div className="w-full bg-black h-[50vh] mt-10 relative">
+        <Image src="/images/Bersoreria12814-BW.jpg" alt="Gambar dari Pinterest" fill className="object-cover" />
+      </div>
       <div className="flex justify-end gap-5 mt-8">
-        {data?.dataLink.map((item: IDataLinkType, id: number) => (
+        {result(data, 'data.dataLink', []).map((item: IDataLinkType, id: number) => (
           <TooltipProvider key={id}>
             <Tooltip>
               <TooltipTrigger asChild>
