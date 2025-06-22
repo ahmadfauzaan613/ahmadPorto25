@@ -8,81 +8,93 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const getData = await prisma.portofolio.findMany()
-    return NextResponse.json(getData, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully get data',
+        data: getData,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error(error)
-    return NextResponse.json({ error: 'Terjadi Kesalahan' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        data: null,
+        status: 500,
+      },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData()
-  const jsonString = formData.get('json')?.toString() ?? ''
-  const logoFiles = formData.getAll('file') as File[]
-  const imageFile = formData.get('image') as File | null
-
   try {
-    if (!jsonString) {
-      return NextResponse.json({ error: 'Data json tidak valid' }, { status: 400 })
-    }
+    const formData = await req.formData()
 
-    const parsed = JSON.parse(jsonString) as {
-      name: string
-      description: string
-      image: string
-      link: string
-      logo: { name: string; file: string }[]
-    }
+    const jsonString = formData.get('data')?.toString() ?? '{}'
+    const parsed = JSON.parse(jsonString)
 
-    const { name, description, link, logo } = parsed
+    const { name, description, link } = parsed
+    const imageFile = formData.get('image') as File | null
+    const logoFiles = formData.getAll('logo') as File[]
 
+    // Upload image utama
     let imageUrl = ''
-
-    // Simpan gambar utama (jika ada)
-    if (imageFile) {
+    if (imageFile && imageFile.size > 0) {
       const bytes = await imageFile.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${imageFile.name.replace(/\s+/g, '-')}`
+      const fileName = imageFile.name.replace(/\s+/g, '-')
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
     }
 
-    // Bulk simpan logo, map setiap logo sesuai index dengan file
+    // Upload semua logo
     const updatedLogos = await Promise.all(
-      logo.map(async (item, index) => {
-        let filePath = item.file || ''
-        const file = logoFiles[index]
-        if (file) {
-          const bytes = await file.arrayBuffer()
-          const buffer = Buffer.from(bytes)
-          const fileName = `${file.name.replace(/\s+/g, '-')}`
-          const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
-          await writeFile(fullPath, buffer)
-          filePath = `/upload/image/${fileName}`
-        }
-
+      logoFiles.map(async (file) => {
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        const fileName = file.name.replace(/\s+/g, '-')
+        const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
+        await writeFile(filePath, buffer)
         return {
-          ...item,
-          file: filePath,
+          file: `/upload/image/${fileName}`,
         }
       })
     )
 
-    // Simpan data baru ke DB
-    const newData = await prisma.portofolio.create({
-      data: {
-        name,
-        description,
-        image: imageUrl,
-        link,
-        logo: updatedLogos,
-      },
-    })
+    // Simpan ke DB
+    const finalData = {
+      name,
+      description,
+      link,
+      image: imageUrl,
+      logo: updatedLogos,
+    }
 
-    return NextResponse.json(newData, { status: 201 })
-  } catch (err) {
-    console.error('[PORTOFOLIO POST ERROR]', err)
-    return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 })
+    const result = await prisma.portofolio.create({ data: finalData })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Portofolio created successfully',
+      data: result,
+    })
+  } catch (error) {
+    console.error('Error saving data:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Server error occurred',
+        error: {
+          code: 'INTERNAL_ERROR',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+      },
+      { status: 500 }
+    )
   }
 }

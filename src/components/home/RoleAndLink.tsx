@@ -40,25 +40,28 @@ export default function RoleAndLink() {
 
   return (
     <React.Fragment>
-      <h1 className="text-8xl font-bold text-[#f04c1c] uppercase">{result(data, 'data.role', '')}</h1>
-      <div className="w-full bg-black h-[50vh] mt-10 relative">
-        <Image src="/images/Bersoreria12814-BW.jpg" alt="Gambar dari Pinterest" fill className="object-cover" />
-      </div>
-      <div className="flex justify-end gap-5 mt-8">
-        {result(data, 'data.dataLink', []).map((item: IDataLinkType, id: number) => (
-          <TooltipProvider key={id}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href={item.url} target="_blank" rel="noopener noreferrer">
-                  <Button key={id} variant="ghost" className="border border-[#f04c1c] cursor-pointer rounded-full p-2">
-                    <ButtonFunction data={item.type} />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#f04c1c] capitalize">{item.type}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
+      <div className="mt-10">
+        <h1 className="text-8xl font-bold text-[#f04c1c]">AHMAD FAUZAN</h1>
+        <h1 className="text-8xl font-bold text-[#f04c1c] uppercase">{result(data, 'data.role', '')}</h1>
+        <div className="w-full bg-black h-[50vh] mt-10 relative">
+          <Image src="/images/Bersoreria12814-BW.jpg" alt="Gambar dari Pinterest" fill className="object-cover" />
+        </div>
+        <div className="flex justify-end gap-5 mt-8">
+          {result(data, 'data.dataLink', []).map((item: IDataLinkType, id: number) => (
+            <TooltipProvider key={id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={item.url} target="_blank" rel="noopener noreferrer">
+                    <Button key={id} variant="ghost" className="border border-[#f04c1c] cursor-pointer rounded-full p-2">
+                      <ButtonFunction data={item.type} />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#f04c1c] capitalize">{item.type}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
       </div>
     </React.Fragment>
   )

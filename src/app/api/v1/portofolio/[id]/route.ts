@@ -1,25 +1,35 @@
 import { PrismaClient } from '@/generated/prisma'
 import { ParamType } from '@/types/ParamType'
-import { writeFile, unlink } from 'fs/promises'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
+import { writeFile, unlink } from 'fs/promises'
 
 const prisma = new PrismaClient()
 
-export async function PUT(req: NextRequest) {
-  const url = new URL(req.url)
-  const id = Number(url.pathname.split('/').pop())
+export async function PUT(req: NextRequest, { params }: ParamType) {
+  const id = Number(params.id)
   const formData = await req.formData()
-
-  const jsonString = formData.get('json')?.toString() ?? ''
-  const logoFiles = formData.getAll('file') as File[]
+  const jsonString = formData.get('data')?.toString() ?? ''
+  const logoFiles = formData.getAll('logo') as File[]
   const imageFile = formData.get('image') as File | null
 
-  try {
-    const existing = await prisma.portofolio.findUnique({ where: { id } })
+  if (isNaN(id)) {
+    return NextResponse.json({ success: false, status: 400, message: 'Invalid ID', data: null }, { status: 400 })
+  }
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
+  try {
+    if (!jsonString) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid JSON data',
+          error: {
+            code: 'BAD_REQUEST',
+            details: 'Format data tidak sesuai dengan skema yang diharapkan',
+          },
+        },
+        { status: 400 }
+      )
     }
 
     const parsed = JSON.parse(jsonString) as {
@@ -27,10 +37,24 @@ export async function PUT(req: NextRequest) {
       description: string
       image: string
       link: string
-      logo: { name: string; file: string }[]
+      logo: { file: string }[]
     }
 
     const { name, description, link, logo } = parsed
+
+    const existing = await prisma.portofolio.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Data tidak ditemukan',
+          error: {
+            code: 'NOT_FOUND',
+          },
+        },
+        { status: 404 }
+      )
+    }
 
     let imageUrl = existing.image
 
@@ -39,38 +63,41 @@ export async function PUT(req: NextRequest) {
         const oldImagePath = path.join(process.cwd(), 'public', existing.image)
         await unlink(oldImagePath).catch(() => {})
       }
+
       const bytes = await imageFile.arrayBuffer()
       const buffer = Buffer.from(bytes)
-      const fileName = `${imageFile.name.replace(/\s+/g, '-')}`
+      const fileName = imageFile.name.replace(/\s+/g, '-')
       const filePath = path.join(process.cwd(), 'public/upload/image', fileName)
       await writeFile(filePath, buffer)
       imageUrl = `/upload/image/${fileName}`
     }
+
+    // Update logo files
     let fileUploadIndex = 0
     const updatedLogos = await Promise.all(
       logo.map(async (item) => {
-        if (!item.file) {
-          const file = logoFiles[fileUploadIndex]
-          fileUploadIndex++
+        let filePath = item.file || ''
+        const file = logoFiles[fileUploadIndex]
 
-          if (file && file.size > 0) {
-            const bytes = await file.arrayBuffer()
-            const buffer = Buffer.from(bytes)
-            const fileName = `${file.name.replace(/\s+/g, '-')}`
-            const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
-            await writeFile(fullPath, buffer)
-            return {
-              ...item,
-              file: `/upload/image/${fileName}`,
-            }
-          }
+        const isNewUpload = file && (!item.file.startsWith('/upload/') || item.file === 'new' || item.file === '')
+
+        if (isNewUpload) {
+          const bytes = await file.arrayBuffer()
+          const buffer = Buffer.from(bytes)
+          const fileName = file.name.replace(/\s+/g, '-')
+          const fullPath = path.join(process.cwd(), 'public/upload/image', fileName)
+          await writeFile(fullPath, buffer)
+          filePath = `/upload/image/${fileName}`
+          fileUploadIndex++
         }
 
-        return item
+        return {
+          ...item,
+          file: filePath,
+        }
       })
     )
 
-    // ✅ Update ke DB
     const updatedData = await prisma.portofolio.update({
       where: { id },
       data: {
@@ -82,10 +109,28 @@ export async function PUT(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(updatedData, { status: 200 })
-  } catch (err) {
-    console.error('[PORTOFOLIO PUT ERROR]', err)
-    return NextResponse.json({ error: 'Gagal update data' }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: true,
+        status: 200,
+        message: 'Successfully updated data',
+        data: updatedData,
+      },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'A server error occurred',
+        error: {
+          code: 'INTERNAL_ERROR',
+          details: (error as Error).message,
+        },
+      },
+      { status: 500 }
+    )
   }
 }
 

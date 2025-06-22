@@ -3,8 +3,10 @@
 import { usePorto } from '@/app/hooks/portofolio/usePorto'
 import { useCreatePorto } from '@/app/hooks/portofolio/usePortoAdd'
 import { useDeletePorto } from '@/app/hooks/portofolio/usePortoDelete'
+import { useUpdatePorto } from '@/app/hooks/portofolio/usePortoUpdate'
 import DialogAdd from '@/components/DialogAdd'
 import DialogDelete from '@/components/DialogDelete'
+import DialogEdit from '@/components/DialogEdit'
 import ErrorDialog from '@/components/ErrorDialog'
 import SuccessDialog from '@/components/SuccessDialog'
 import Table from '@/components/Table'
@@ -13,27 +15,38 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { IPortoCreate, IPortofolioType } from '@/types/Portofolio'
+import { IPortoCreate } from '@/types/Portofolio'
 import { CellContext, createColumnHelper } from '@tanstack/react-table'
+import { result } from 'lodash'
 import { Edit2, Trash2 } from 'lucide-react'
 import Image from 'next/image'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 export default function Portofolio() {
   const { data, isLoading } = usePorto()
   const [openAdd, setOpenAdd] = useState(false)
   const [openEdit, setOpenEdit] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedData, setSelectedData] = useState<IPortoCreate>({
+    id: null,
+    name: '',
+    description: '',
+    image: null,
+    link: '',
+    logo: [],
+  })
+  const [logosUpdate, setLogosUpdate] = useState<LogoItem[]>([{ file: null }])
+  const [selectedDataLogo, setSelectedDataLogo] = useState<{ file: string }[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [showError, setShowError] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
-  const [addLogoArr, setLogoArr] = useState<{ name: string }[]>([])
-  const columnHelper = createColumnHelper<IPortofolioType>()
 
   const handleOpenEdit = () => {
     setOpenEdit(true)
+    setLogosUpdate([])
   }
 
+  const columnHelper = createColumnHelper<IPortoCreate>()
   const columns = [
     columnHelper.accessor('name', {
       header: 'Name',
@@ -46,23 +59,20 @@ export default function Portofolio() {
     columnHelper.accessor('image', {
       header: 'Image',
       cell: (item) => {
-        const imageUrl = item.getValue()
-        return <Image width={20} height={20} src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}/${imageUrl}`} alt="Image" className="h-12 w-12 object-cover rounded" />
+        const value = item.getValue() as string | null
+        return value ? <Image src={value} alt="image" width={64} height={64} className="object-cover rounded" /> : <span className="text-gray-400 italic">No image</span>
       },
     }),
     columnHelper.accessor('logo', {
       header: 'Logo',
       cell: (item) => {
-        const logos = item.getValue() as unknown as { id: number; file: string; name: string }[]
-
-        if (!logos || logos.length === 0) {
-          return <span className="text-sm text-gray-400 italic">No logos</span>
-        }
-
-        return (
+        const logos = (item.getValue() as { file: string }[]) || []
+        return logos.length === 0 ? (
+          <span className="text-gray-400 italic">No logo</span>
+        ) : (
           <div className="flex gap-2">
             {logos.map((logo, index) => (
-              <Image key={index} width={24} height={24} src={`${process.env.NEXT_PUBLIC_IMAGE_BASE_URL}${logo.file}`} alt={logo.name || `Logo ${index + 1}`} className="h-12 w-12 object-cover rounded" />
+              <Image key={index} src={logo.file} alt={`logo-${index}`} width={40} height={40} className="object-contain rounded" />
             ))}
           </div>
         )
@@ -75,12 +85,13 @@ export default function Portofolio() {
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }: CellContext<IPortofolioType, unknown>) => (
+      cell: ({ row }: CellContext<IPortoCreate, unknown>) => (
         <div className="flex gap-2">
           <button
             onClick={() => {
               setSelectedId(row.original.id)
               handleOpenEdit()
+              setSelectedData(row.original)
             }}
             className="p-1 text-blue-600 hover:text-blue-800"
             aria-label="Edit"
@@ -113,20 +124,20 @@ export default function Portofolio() {
     }
   }
 
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [logoFiles, setLogoFiles] = useState<File[]>([])
   const [filterValue, setFilterValue] = useState<IPortoCreate>({
+    id: NaN,
     name: '',
     description: '',
-    image: '',
+    image: null,
     link: '',
     logo: [],
   })
 
   const initialValue: IPortoCreate = {
+    id: NaN,
     name: '',
     description: '',
-    image: '',
+    image: null,
     link: '',
     logo: [],
   }
@@ -134,8 +145,17 @@ export default function Portofolio() {
   const handleOpenAdd = () => {
     setOpenAdd(true)
     setFilterValue(initialValue)
-    setLogoArr([])
+    setLogos([])
   }
+
+  useEffect(() => {
+    if (selectedId !== null && data && result(data, 'data', []).length > 0) {
+      const selected = (result(data, 'data', []) as IPortoCreate[]).find((item) => item.id === selectedId)
+      if (selected) {
+        setFilterValue(selected)
+      }
+    }
+  }, [selectedId, data])
 
   const fields = [
     { key: 'name', label: 'Name', type: 'text' },
@@ -144,28 +164,45 @@ export default function Portofolio() {
     { key: 'link', label: 'Link', type: 'text' },
   ] as const
 
+  type LogoItem = {
+    file: File | null
+  }
+
+  const [logos, setLogos] = useState<LogoItem[]>([{ file: null }])
+  const handleFileChange = (index: number, file: File | null) => {
+    const updated = [...logos]
+    updated[index].file = file
+    setLogos(updated)
+  }
   const handleAddLogo = () => {
-    setLogoArr((prev) => [...prev, { file: '', name: '' }])
+    setLogos((prev) => [...prev, { file: null }])
+  }
+  const handleDeleteLogo = (index: number) => {
+    setLogos((prev) => prev.filter((_, i) => i !== index))
+  }
+  const payloadData: IPortoCreate = {
+    id: NaN,
+    name: result(filterValue, 'name', ''),
+    description: result(filterValue, 'description', ''),
+    image: null,
+    link: result(filterValue, 'link', ''),
+    logo: [],
   }
 
   const { mutate: createPorto } = useCreatePorto()
   const handleSubmit = async () => {
     try {
-      const payload: IPortoCreate = {
-        ...filterValue,
-        image: '',
-        logo: addLogoArr.map((item) => ({
-          name: item.name,
-          file: '',
-        })),
-      }
-      createPorto({
-        payload,
-        image: imageFile,
-        files: logoFiles,
+      const logoFiles = logos.map((item) => item.file).filter((file): file is File => file !== null)
+
+      await createPorto({
+        payload: payloadData,
+        image: filterValue.image,
+        logo: logoFiles,
       })
+
       setOpenAdd(false)
       setShowSuccess(true)
+      setLogos([{ file: null }])
     } catch (error) {
       console.error(error)
       setOpenAdd(false)
@@ -173,11 +210,85 @@ export default function Portofolio() {
       setShowError(true)
     }
   }
+  // UPDATE
+
+  useEffect(() => {
+    const initialLogo = result(selectedData, 'logo', []) as { file: string }[]
+    setSelectedDataLogo(initialLogo)
+  }, [selectedData])
+  const combinedLogos = [
+    ...selectedDataLogo,
+    ...logosUpdate
+      .filter((item) => item.file instanceof File)
+      .map((item) => ({
+        file: item.file?.name || '',
+      })),
+  ]
+  const handleFileChangeUpdate = (index: number, file: File | null) => {
+    const updated = [...logosUpdate]
+    updated[index].file = file
+    setLogosUpdate(updated)
+  }
+  const handleAddLogoUpdate = () => {
+    setLogosUpdate((prev) => [...prev, { file: null }])
+  }
+  const handleDeleteLogoUpdate = (index: number) => {
+    setLogosUpdate((prev) => prev.filter((_, i) => i !== index))
+  }
+  const handleDeleteSelectedDataLogo = (index: number) => {
+    setSelectedDataLogo((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const logoFiles = logosUpdate.map((item) => item.file).filter((file): file is File => file !== null)
+
+  const payloadUpdate: IPortoCreate = {
+    id: selectedId,
+    name: filterValue.name,
+    description: filterValue.description,
+    image: filterValue.image,
+    link: filterValue.link,
+    logo: combinedLogos,
+  }
+
+  const { mutate: updatePorto } = useUpdatePorto()
+
+  const handleUpdate = async () => {
+    try {
+      await updatePorto({
+        id: String(selectedId ?? ''),
+        payload: {
+          ...payloadUpdate,
+          image: filterValue.image instanceof File ? null : null,
+        },
+        image: filterValue.image instanceof File ? filterValue.image : null,
+        logo: logoFiles,
+      })
+      setShowSuccess(true)
+      setOpenEdit(false)
+    } catch (error: unknown) {
+      console.error(error)
+      setErrorMsg('Update failed.')
+      setShowError(true)
+      setOpenEdit(false)
+    }
+  }
 
   return (
     <TiltleAdmin tilte="PORTOFOLIO" addButton={true} onClick={handleOpenAdd}>
-      <Table data={data ?? []} columns={columns} isLoading={isLoading} />
-      <DialogAdd open={openAdd} setOpen={setOpenAdd} handleAdd={handleSubmit}>
+      <Table data={result(data, 'data', [])} columns={columns} isLoading={isLoading} />
+      <DialogEdit
+        open={openEdit}
+        setOpen={setOpenEdit}
+        onReset={() => {
+          if (selectedId && data) {
+            const selected = (result(data, 'data', []) as IPortoCreate[]).find((item) => item.id === selectedId)
+            if (selected) {
+              setFilterValue(selected)
+            }
+          }
+        }}
+        handleUpdate={handleUpdate}
+      >
         <div className="space-y-4">
           {fields.map((field) => {
             const { key, label, type } = field
@@ -205,21 +316,19 @@ export default function Portofolio() {
                 return (
                   <div key={key}>
                     <Label htmlFor={key}>{label}</Label>
+                    <p>{result(selectedData, 'image', null)}</p>
                     <Input
                       id={key}
                       type="file"
-                      accept="image/*"
-                      className="mt-2 w-full outline-none capitalize"
+                      placeholder={`${label.toLowerCase()}`}
                       onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setImageFile(file)
-                          setFilterValue((prev) => ({
-                            ...prev,
-                            image: file.name,
-                          }))
-                        }
+                        const file = e.target.files?.[0] ?? null
+                        setFilterValue((prev) => ({
+                          ...prev,
+                          [key]: file,
+                        }))
                       }}
+                      className="mt-2 w-full outline-none capitalize"
                     />
                   </div>
                 )
@@ -245,54 +354,95 @@ export default function Portofolio() {
             }
           })}
         </div>
-        <div>
-          <div className="flex justify-end">
-            <Button onClick={handleAddLogo}>Add Logo</Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="block">Logo</Label>
+            <Button type="button" onClick={handleAddLogoUpdate} className="mt-2 px-4 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+              + Tambah Logo
+            </Button>
           </div>
-          {addLogoArr && addLogoArr.length === 0 ? (
-            <div className="border p-2 mt-3 rounded-md">
-              <p>Image Kosong</p>
+
+          {selectedDataLogo.map((logo, index) => (
+            <div key={index} className="flex items-center gap-2 mt-2">
+              <Input value={logo.file} disabled className="w-full outline-none capitalize" />
+              <Button type="button" variant="destructive" size="sm" onClick={() => handleDeleteSelectedDataLogo(index)} className="text-sm px-2 py-1">
+                Hapus
+              </Button>
             </div>
-          ) : (
-            addLogoArr.map((item, idx) => (
-              <div className="grid items-center grid-cols-2 gap-2" key={idx}>
-                <div>
-                  <Label htmlFor="logo">Logo</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      setLogoFiles((prev) => {
-                        const updated = [...prev]
-                        updated[idx] = file
-                        return updated
-                      })
-                    }}
-                  />
-                </div>
-                <div className="my-1">
-                  <Label htmlFor={`logo-name-${idx}`}>Logo Name</Label>
-                  <Input
-                    id={`logo-name-${idx}`}
-                    value={item.name}
-                    onChange={(e) => {
-                      const name = e.target.value
-                      setLogoArr((prev) => {
-                        const updated = [...prev]
-                        updated[idx].name = name
-                        return updated
-                      })
-                    }}
-                    placeholder="Logo Name"
-                    type="text"
-                    className="mt-2 w-full outline-none capitalize"
-                  />
-                </div>
+          ))}
+
+          {logosUpdate.map((logo, index) => (
+            <div key={`new-${index}`} className="flex items-center gap-2">
+              <Input type="file" accept="image/*" onChange={(e) => handleFileChangeUpdate(index, e.target.files?.[0] ?? null)} className="w-full" />
+              <Button type="button" variant="destructive" size="sm" onClick={() => handleDeleteLogoUpdate(index)} className="text-sm px-2 py-1">
+                Hapus
+              </Button>
+            </div>
+          ))}
+        </div>
+      </DialogEdit>
+      <DialogAdd open={openAdd} setOpen={setOpenAdd} handleAdd={handleSubmit}>
+        <div className="space-y-4">
+          {fields.map((field) => {
+            const { key, label, type } = field
+            switch (type) {
+              case 'Uploadimage':
+                return (
+                  <div key={key}>
+                    <Label htmlFor={key}>{label}</Label>
+                    <Input
+                      id={key}
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null
+                        setFilterValue((prev) => ({
+                          ...prev,
+                          [key]: file,
+                        }))
+                      }}
+                      placeholder={`${label.toLowerCase()}`}
+                      className="mt-2 w-full outline-none capitalize"
+                    />
+                  </div>
+                )
+              case 'text':
+              default:
+                return (
+                  <div key={key}>
+                    <Label htmlFor={key}>{label}</Label>
+                    <Input
+                      id={key}
+                      value={filterValue[key]}
+                      onChange={(e) =>
+                        setFilterValue((prev) => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
+                      placeholder={`${label.toLowerCase()}`}
+                      className="mt-2 w-full outline-none capitalize"
+                    />
+                  </div>
+                )
+            }
+          })}
+          <div className="space-y-4 ">
+            <div className="flex items-center justify-between">
+              <Label className="block">Logo</Label>
+              <Button type="button" onClick={handleAddLogo} className="mt-2 px-4 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">
+                + Tambah Logo
+              </Button>
+            </div>
+
+            {logos.map((logo, index) => (
+              <div key={index} className="flex items-center gap-2 mt-2">
+                <Input id={`logo-${index}`} type="file" accept="image/*" onChange={(e) => handleFileChange(index, e.target.files?.[0] ?? null)} className="w-full" />
+                <Button type="button" variant="destructive" size="sm" onClick={() => handleDeleteLogo(index)} className="text-sm px-2 py-1">
+                  Hapus
+                </Button>
               </div>
-            ))
-          )}
+            ))}
+          </div>
         </div>
       </DialogAdd>
       <SuccessDialog open={showSuccess} onClose={() => setShowSuccess(false)} />

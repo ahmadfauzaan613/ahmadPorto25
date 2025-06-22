@@ -4,7 +4,7 @@ export interface IPortofolioType {
   description: string
   image: string
   link: string
-  logo: IlogoType
+  logo: string
   createdAt: string
   updatedAt: string
 }
@@ -16,11 +16,21 @@ export interface IlogoType {
 }
 
 export interface IPortoCreate {
+  id: number | null
   name: string
   description: string
-  image: string
+  image: File | null
   link: string
-  logo: IlogoCreate[]
+  logo: (File | { file: string })[]
+}
+
+export interface IPortoUpdate {
+  id: number | null
+  name: string
+  description: string
+  image: string | File | null
+  link: string
+  logo: (File | { file: string })[]
 }
 
 export interface IlogoCreate {
