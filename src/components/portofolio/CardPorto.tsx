@@ -17,23 +17,26 @@ export default function CardPorto() {
     )
   }
   return result(data, 'data', []).map((Item: IPortofolioType, idx: number) => (
-    <div className="border border-[#f04c1c]" key={idx}>
-      <div className="bg-[#f04c1c] w-full h-[25vh]">
-        <Image src={Item.image} alt={`logo-${idx}`} className="w-full h-full object-cover rounded" width={500} height={300} style={{ width: '100%', height: '100%' }} />
+    <div className="border border-[#f04c1c]  overflow-hidden shadow-md hover:shadow-lg transition" key={idx}>
+      <div className="border-b  border-[#f04c1c] w-full h-[20vh] sm:h-[25vh]">
+        <Image src={Item.image} alt={`logo-${idx}`} className="w-full h-full object-cover" width={500} height={300} />
       </div>
-      <div className=" px-4">
-        <p className="text-4xl font-bold text-[#f04c1c]">{Item.name}</p>
-        <p className="text-sm pt-3 text-[#f04c1c]">{Item.description}</p>
+
+      <div className="px-4 py-3">
+        <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#f04c1c]">{Item.name}</p>
+        <p className="text-sm sm:text-base pt-2 text-[#f04c1c]">{Item.description}</p>
       </div>
-      <div className="flex items-end justify-between px-4 py-4">
-        <div className=" flex items-center gap-3">
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-4 gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           {result(Item, 'logo', []).map((item, idx) => (
-            <div className="bg-[#f04c1c] w-10 h-10" key={idx}>
+            <div className="bg-[#f04c1c] w-8 h-8 sm:w-10 sm:h-10 rounded" key={idx}>
               <Image src={result(item, 'file', '')} alt={`logo-${idx}`} width={500} height={500} className="w-full h-full object-cover rounded" />
             </div>
           ))}
         </div>
-        <Link href={Item.link} target="_blank" className="text-[#f04c1c] hover:font-bold">
+
+        <Link href={Item.link} target="_blank" className="text-[#f04c1c] hover:font-bold text-sm sm:text-base">
           Visit
         </Link>
       </div>
