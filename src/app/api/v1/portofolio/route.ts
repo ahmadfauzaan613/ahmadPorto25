@@ -7,7 +7,11 @@ const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    const getData = await prisma.portofolio.findMany()
+    const getData = await prisma.portofolio.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
     return NextResponse.json(
       {
         success: true,

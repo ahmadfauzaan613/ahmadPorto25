@@ -30,8 +30,8 @@ export default function CardPorto() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-4 gap-2">
         <div className="flex items-center flex-wrap gap-2">
           {result(Item, 'logo', []).map((item, idx) => (
-            <div className="bg-[#f04c1c] w-8 h-8 sm:w-10 sm:h-10 rounded" key={idx}>
-              <Image src={result(item, 'file', '')} alt={`logo-${idx}`} width={500} height={500} className="w-full h-full object-cover rounded" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded" key={idx}>
+              <Image src={result(item, 'file', '')} alt={`logo-${idx}`} width={500} height={500} className="w-full h-full object-fill rounded" />
             </div>
           ))}
         </div>

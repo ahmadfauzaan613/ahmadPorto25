@@ -21,7 +21,7 @@ export default function DatePicker({ date, onChange }: { date: string; onChange:
           selected={parsedDate}
           onSelect={(selectedDate) => {
             if (selectedDate) {
-              onChange(selectedDate.toISOString()) // atau format sesuai backend
+              onChange(selectedDate.toISOString())
             }
           }}
           initialFocus

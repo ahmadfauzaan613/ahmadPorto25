@@ -41,7 +41,7 @@ export default function Experience() {
         </motion.p>
       ) : (
         <motion.div
-          className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5"
+          className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5 my-5"
           initial="hidden"
           animate="visible"
           variants={{
