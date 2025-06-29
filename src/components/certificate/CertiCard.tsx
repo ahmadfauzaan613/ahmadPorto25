@@ -19,7 +19,7 @@ export default function CertiCard() {
   }
   return dataCerti.map((item, idx) => (
     <div className="w-full  h-[30vh] sm:h-[40vh] md:h-[50vh] relative overflow-hidden shadow hover:shadow-lg transition-all" key={idx}>
-      <Image src={item.image} alt={item.name} fill className="object-fill" />
+      <Image src={item.image} alt={item.name} fill className="object-contain" />
     </div>
   ))
   return <div></div>

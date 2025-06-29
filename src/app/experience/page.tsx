@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { useExperience } from '../hooks/experience/useExperience'
 import CardExperience from '@/components/CardExperience'
 import { result } from 'lodash'
@@ -20,6 +20,18 @@ export default function Experience() {
       year: 'numeric',
     })
   }
+
+  const [expandedItems, setExpandedItems] = useState<{ [key: number]: boolean }>({})
+
+  const toggleExpand = (index: number) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
+  const shouldTruncate = (text: string) => text.length > 100
+  const getDisplayedText = (text: string, isExpanded: boolean) => (isExpanded || !shouldTruncate(text) ? text : text.slice(0, 100) + '...')
 
   if (isLoading) {
     return (
@@ -53,18 +65,34 @@ export default function Experience() {
             },
           }}
         >
-          {certificates.map((item, idx) => (
-            <motion.div
-              key={idx}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.6 }}
-            >
-              <CardExperience id={item.id} createdAt={item.createdAt} updatedAt={item.updatedAt} company={item.company} role={item.role} description={item.description} location={item.location} startDate={formatDate(item.startDate)} endDate={formatDate(item.endDate)} />
-            </motion.div>
-          ))}
+          {certificates.map((item, idx) => {
+            const isExpanded = expandedItems[idx] || false
+            return (
+              <motion.div
+                key={idx}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <CardExperience
+                  id={item.id}
+                  createdAt={item.createdAt}
+                  updatedAt={item.updatedAt}
+                  company={item.company}
+                  role={item.role}
+                  description={getDisplayedText(item.description, isExpanded)}
+                  location={item.location}
+                  startDate={formatDate(item.startDate)}
+                  endDate={formatDate(item.endDate)}
+                  shouldTruncate={shouldTruncate(item.description)}
+                  toggleExpand={() => toggleExpand(idx)}
+                  isExpanded={isExpanded}
+                />
+              </motion.div>
+            )
+          })}
         </motion.div>
       )}
     </motion.div>

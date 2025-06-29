@@ -8,6 +8,9 @@ export interface IExperienceType {
   location: string
   createdAt: string
   updatedAt: string
+  shouldTruncate: boolean
+  toggleExpand: () => void
+  isExpanded: boolean
 }
 
 export interface IExperienceCreateType {

@@ -5,9 +5,20 @@ import { result } from 'lodash'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function CardPorto() {
   const { data, isLoading } = usePorto()
+  const [expandedItems, setExpandedItems] = React.useState<{ [key: number]: boolean }>({})
+  const toggleExpand = (index: number) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
+  const shouldTruncate = (text: string) => text.length > 120
+  const getDisplayedText = (text: string, isExpanded: boolean) => (isExpanded || !shouldTruncate(text) ? text : `${text.slice(0, 120)}...`)
 
   if (isLoading) {
     return (
@@ -24,7 +35,19 @@ export default function CardPorto() {
 
       <div className="px-4 py-3">
         <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#f04c1c]">{Item.name}</p>
-        <p className="text-sm sm:text-base pt-2 text-[#f04c1c]">{Item.description}</p>
+        <div className="text-sm sm:text-base pt-2 text-[#f04c1c]">
+          <AnimatePresence initial={false}>
+            <motion.div key={expandedItems[idx] ? 'expanded' : 'collapsed'} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25, ease: 'anticipate' }}>
+              {getDisplayedText(Item.description, expandedItems[idx])}
+            </motion.div>
+          </AnimatePresence>
+
+          {shouldTruncate(Item.description) && (
+            <button onClick={() => toggleExpand(idx)} className="mt-1 underline text-[#f04c1c] hover:text-[#c73d16] transition text-xs sm:text-sm">
+              {expandedItems[idx] ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-4 gap-2">

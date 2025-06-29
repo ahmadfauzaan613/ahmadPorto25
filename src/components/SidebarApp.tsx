@@ -4,10 +4,17 @@ import React from 'react'
 import { LogOut } from 'lucide-react'
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import { LinkSidebar } from '@/types/Sidebar'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 
 export default function SidebarApp() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
+    router.push('/admin')
+  }
 
   return (
     <Sidebar>
@@ -34,10 +41,10 @@ export default function SidebarApp() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a href="#" className="flex items-center gap-2 text-white">
+                <p onClick={handleLogout} className="flex items-center gap-2 text-white">
                   <LogOut className="w-4 h-4" />
                   <span>Log Out</span>
-                </a>
+                </p>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
